@@ -1,4 +1,8 @@
-# three-tier-project
+## System Architecture
+
+Here is the blueprint for our 3-tier GKE deployment:
+
+```mermaid
 graph TD
     User((👤 End User)) -->|HTTPS| LB[🌐 External HTTP Load Balancer]
 
@@ -6,6 +10,7 @@ graph TD
         direction TB
         LB
         AR[📦 Artifact Registry]
+        
         
         subgraph VPC [🔒 Private VPC Network]
             direction TB
@@ -20,3 +25,4 @@ graph TD
     GitHub -->|1. Build & Push Image| AR
     GitHub -->|2. kubectl apply| GKE
     AR -.->|Pulls Image| GKE
+```
