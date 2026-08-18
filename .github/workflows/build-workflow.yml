@@ -1,0 +1,61 @@
+name: 'Build and Push Docker Images'
+
+# This tells the pipeline to run every time you push code to the main branch
+on: workflow_dispatch
+
+# Required permissions for Workload Identity Federation
+permissions:
+  contents: 'read'
+  id-token: 'write'
+
+env:
+  # --- REPLACE THESE THREE VALUES as per your account ---
+  # YOUR_PROVIDER_STRING -> The long projects/12345/locations/global... string you copied.
+  #YOUR_SA_EMAIL -> Your github-actions-sa@... email.
+  #YOUR_GCP_PROJECT_ID -> Your actual Google Project ID.
+  WORKLOAD_IDENTITY_PROVIDER: 'projects/250794715777/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+  SERVICE_ACCOUNT: 'github-actions-sa@project-f2bce33d-23f5-4831-9b4.iam.gserviceaccount.com'
+  PROJECT_ID: 'project-f2bce33d-23f5-4831-9b4'
+  # ----------------------------------
+  REGION: 'us-east1'
+  REPOSITORY: 'three-tier-repo'
+
+jobs:
+  build-and-push:
+    name: 'Build and Push to Artifact Registry'
+    runs-on: 'ubuntu-latest'
+
+    steps:
+      - name: 'Checkout Code'
+        uses: 'actions/checkout@v4'
+
+      # This is the "Bouncer" step. GitHub knocks on GCP's door.
+      - name: 'Authenticate to Google Cloud'
+        id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: '${{ env.WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ env.SERVICE_ACCOUNT }}'
+
+      # This configures Docker to use your GCP credentials
+      - name: 'Set up Cloud SDK & Docker Auth'
+        uses: 'google-github-actions/setup-gcloud@v2'
+      - name: 'Docker Auth'
+        run: |-
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      # Build and push the Backend Image
+      - name: 'Build and Push Backend'
+        run: |-
+          cd backend
+          IMAGE_PATH=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/backend:${{ github.sha }}
+          docker build -t $IMAGE_PATH .
+          docker push $IMAGE_PATH
+
+      # Build and push the Frontend Image
+      - name: 'Build and Push Frontend'
+        run: |-
+          cd frontend
+          IMAGE_PATH=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/frontend:${{ github.sha }}
+          docker build -t $IMAGE_PATH .
+          docker push $IMAGE_PATH
