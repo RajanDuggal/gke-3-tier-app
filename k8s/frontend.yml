@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: us-east1-docker.pkg.dev/project-f2bce33d-23f5-4831-9b4/three-tier-repo/frontend:4219992c02191e8fe463f00c693e61d1daf5eada
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  type: LoadBalancer   # This tells GCP to create a public IP address for your website!
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 80
