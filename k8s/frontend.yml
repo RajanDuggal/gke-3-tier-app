@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: us-east1-docker.pkg.dev/project-f2bce33d-23f5-4831-9b4/three-tier-repo/frontend:99b13b000636699d660cf461a5111d124ea66aea
+        image: us-east1-docker.pkg.dev/project-f2bce33d-23f5-4831-9b4/three-tier-repo/frontend:362944a4a1c1228c664dfd4c4115122e4c5749ca
         ports:
         - containerPort: 80
         resources:
